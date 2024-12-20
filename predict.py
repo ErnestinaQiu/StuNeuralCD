@@ -1,6 +1,5 @@
 import torch
 import numpy as np
-import json
 import sys
 from sklearn.metrics import roc_auc_score
 from data_loader import ValTestDataLoader
@@ -58,34 +57,36 @@ def load_snapshot(model, filename):
     f.close()
 
 
-def get_status():
+def get_status(epoch):
     '''
     An example of getting student's knowledge status
     :return:
     '''
-    net = Net()
-    load_snapshot(net, 'model/model_epoch12')       # load model
+    global exer_n, knowledge_n, student_n
+    net = Net(student_n, exer_n, knowledge_n)
+    load_snapshot(net, 'model/model_epoch{}'.format(epoch))       # load model
     net.eval()
     with open('result/student_stat.txt', 'w', encoding='utf8') as output_file:
         for stu_id in range(student_n):
             # get knowledge status of student with stu_id (index)
             status = net.get_knowledge_status(torch.LongTensor([stu_id])).tolist()[0]
             output_file.write(str(status) + '\n')
+    
 
-
-def get_exer_params():
+def get_exer_params(epoch):
     '''
     An example of getting exercise's parameters (knowledge difficulty and exercise discrimination)
     :return:
     '''
-    net = Net()
-    load_snapshot(net, 'model/model_epoch12')    # load model
+    global exer_n, knowledge_n, student_n
+    net = Net(student_n, exer_n, knowledge_n)
+    load_snapshot(net, 'model/model_epoch{}'.format(epoch))    # load model
     net.eval()
     exer_params_dict = {}
     for exer_id in range(exer_n):
         # get knowledge difficulty and exercise discrimination of exercise with exer_id (index)
         k_difficulty, e_discrimination = net.get_exer_params(torch.LongTensor([exer_id]))
-        exer_params_dict[exer_id + 1] = (k_difficulty.tolist()[0], e_difficulty.tolist()[0])
+        exer_params_dict[exer_id + 1] = (k_difficulty.tolist()[0], e_discrimination.tolist()[0])
     with open('result/exer_params.txt', 'w', encoding='utf8') as o_f:
         o_f.write(str(exer_params_dict))
 
